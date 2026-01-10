@@ -689,10 +689,41 @@ class AirzoneLocalApi:
         for key, value in data.items():
             if key in API_MASTER_PARAMS:
                 system.set_master_param(master_id, key, value)
-            elif key in API_SYSTEM_PARAMS:
-                system.set_param(key, value)
             elif key in API_ZONE_PARAMS:
                 zone.set_param(key, value)
+
+        return res
+
+    async def set_sys_parameters(self, params: dict[str, Any]) -> dict[str, Any]:
+        """Set Airzone System parameters and handle response."""
+        res = await self.put_hvac(params)
+
+        if res is None:
+            raise APIError("set_sys: empty HVAC API response")
+
+        if API_DATA not in res:
+            if API_ERRORS in res:
+                self.handle_errors(res[API_ERRORS])
+            raise APIError(f"set_sys: {API_DATA} not in API response")
+
+        data: dict[str, Any] = res.get(API_DATA, {})
+
+        for key, value in params.items():
+            if key in [API_SYSTEM_ID] and value != 0 and data.get(key) != value:
+                if key == API_SYSTEM_ID:
+                    raise InvalidSystem(
+                        f"set_sys: System mismatch: {data.get(key)} vs {value}"
+                    )
+
+            if key not in data:
+                raise InvalidParam(f"set_sys: param not in data: {key}={value}")
+
+        system_id: int = data[API_SYSTEM_ID]
+
+        system = self.get_system(system_id)
+        for key, value in data.items():
+            if key in API_SYSTEM_PARAMS:
+                system.set_param(key, value)
 
         return res
 

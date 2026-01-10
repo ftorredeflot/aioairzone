@@ -9,7 +9,7 @@ import _config
 import aiohttp
 from aiohttp.client_exceptions import ClientConnectorError
 
-from aioairzone.const import API_MODE, API_SYSTEM_ID, API_ZONE_ID
+from aioairzone.const import API_MODE, API_Q_ADAPT, API_SYSTEM_ID, API_ZONE_ID
 from aioairzone.exceptions import InvalidHost
 from aioairzone.localapi import AirzoneLocalApi
 
@@ -41,6 +41,29 @@ async def main() -> None:
                     API_SYSTEM_ID: 1,
                     API_ZONE_ID: 3,
                     API_MODE: 1,
+                }
+            )
+            modify_end = timeit.default_timer()
+            print(json.dumps(airzone.data(), indent=4, sort_keys=True))
+            print(f"Modify time: {modify_end - modify_start}")
+            print("***")
+
+            print("Sleeping...")
+            time.sleep(3)
+            print("***")
+
+            update_start = timeit.default_timer()
+            await airzone.update()
+            update_end = timeit.default_timer()
+            print(json.dumps(airzone.data(), indent=4, sort_keys=True))
+            print(f"Update time: {update_end - update_start}")
+            print("***")
+
+            modify_start = timeit.default_timer()
+            await airzone.set_sys_parameters(
+                {
+                    API_SYSTEM_ID: 1,
+                    API_Q_ADAPT: 0,
                 }
             )
             modify_end = timeit.default_timer()
